@@ -3,19 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RealStars - Check Fake GitHub Stars</title>
+    <title>RealStars SaaS - GitHub Audit Tool</title>
     <style>
-        body { font-family: sans-serif; background: #0d1117; color: white; text-align: center; padding: 20px; }
-        h1 { color: #58a6ff; margin-top: 50px; }
-        input { padding: 12px; width: 80%; max-width: 300px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: white; }
-        button { padding: 12px 20px; background: #238636; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        p {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background-color: #0d1117;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: #238636;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2ea043;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            display: none;
+            text-align: left;
+        }
+        .metric {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .status-real { color: #3fb950; font-weight: bold; }
+        .status-fake { color: #f85149; font-weight: bold; }
     </style>
 </head>
 <body>
+
+<div class="card">
     <h1>RealStars SaaS</h1>
-    <p>Detect fake GitHub stars instantly before investing or using a repo.</p>
-    <input type="text" placeholder="Enter Repo URL (e.g., facebook/react)">
-    <br>
-    <button onclick="alert('Analysis feature coming soon!')">Analyze Repo</button>
+    <p>Detect GitHub stars & repository activity instantly.</p>
+    
+    <input type="text" id="repoInput" placeholder="e.g. facebook/react or IT777guy/realstars-saas">
+    <button onclick="analyzeRepo()">Analyze Repository</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+async function analyzeRepo() {
+    const input = document.getElementById('repoInput').value.trim();
+    const resultDiv = document.getElementById('result');
+    
+    if (!input) {
+        alert('Please enter a repository in owner/repo format!');
+        return;
+    }
+
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<p style="color: #e3b341;">Fetching data from GitHub API...</p>';
+
+    try {
+        const response = await fetch(`https://api.github.com/repos/${input}`);
+        
+        if (!response.ok) {
+            throw new Error('Repository not found!');
+        }
+
+        const data = await response.json();
+        
+        const stars = data.stargazers_count;
+        const forks = data.forks_count;
+        const openIssues = data.open_issues_count;
+        
+        // Basic ratio check algorithm
+        const ratio = forks > 0 ? (stars / forks).toFixed(1) : stars;
+        let auditStatus = '<span class="status-real">Healthy / Genuine Stars</span>';
+        
+        if (stars > 100 && forks < 5) {
+            auditStatus = '<span class="status-fake">Warning: Potential Fake/Bot Stars Detected!</span>';
+        }
+
+        resultDiv.innerHTML = `
+            <div class="metric"><strong>Repository:</strong> ${data.full_name}</div>
+            <div class="metric"><strong>⭐ Stars:</strong> ${stars}</div>
+            <div class="metric"><strong>🍴 Forks:</strong> ${forks}</div>
+            <div class="metric"><strong>🐛 Open Issues:</strong> ${openIssues}</div>
+            <hr style="border-color: #30363d; margin: 10px 0;">
+            <div class="metric"><strong>Audit Result:</strong> ${auditStatus}</div>
+        `;
+
+    } catch (error) {
+        resultDiv.innerHTML = `<p style="color: #f85149;">Error: ${error.message}</p>`;
+    }
+}
+</script>
+
 </body>
 </html>
+
+    
